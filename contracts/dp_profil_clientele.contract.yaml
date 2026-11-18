@@ -1,0 +1,108 @@
+# Contrat de données au format ODCS (Open Data Contract Standard) v3 : dp_profil_clientele
+# Validé avec le schéma JSON officiel ODCS (bitol-io/open-data-contract-standard, v3.0.2 et v3.1.0).
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:datacontract:les-pins-d-argent:dp_profil_clientele
+name: dp_profil_clientele
+version: 1.0.0
+status: draft
+domain: referentiel-client
+dataProduct: dp_profil_clientele
+tenant: les-pins-d-argent
+description:
+  purpose: Répondre à la question « Qui sont nos clients, et qui viser l'an prochain ? ».
+  limitations: Seuls les clients dont le dernier choix STATS est un accord daté sont comptés ; âge approché à un
+    an près.
+  usage: Analyse de la clientèle consentante ; ne pas présenter ces chiffres comme ceux de toute la clientèle.
+team:
+- username: marketing
+  role: owner
+- username: equipe-data
+  role: producer
+schema:
+- name: dp_profil_clientele
+  physicalName: camping.gold.dp_profil_clientele
+  physicalType: table
+  description: 'Data product marketing : seulement les clients dont le dernier choix STATS est un accord. Grain
+    : un mois x une tranche d''âge x un type de groupe x un pays'
+  properties:
+  - name: mois
+    logicalType: date
+    physicalType: DATE
+    description: Mois d'arrivée du séjour
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 1
+    classification: public
+  - name: tranche_age
+    logicalType: string
+    physicalType: STRING
+    description: 18-24, 25-34, 35-44, 45-54, 55-64, 65+
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 2
+    classification: public
+  - name: type_groupe
+    logicalType: string
+    physicalType: STRING
+    description: solo, adultes ou famille (avec mineurs)
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 3
+    classification: public
+  - name: pays
+    logicalType: string
+    physicalType: STRING
+    description: Pays de résidence
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 4
+    classification: public
+  - name: nb_clients
+    logicalType: integer
+    physicalType: INT
+    description: Nombre de clients
+    required: true
+    classification: public
+  - name: nb_sejours
+    logicalType: integer
+    physicalType: INT
+    description: Nombre de séjours
+    required: true
+    classification: public
+  - name: nb_nuitees
+    logicalType: integer
+    physicalType: INT
+    description: Nombre de nuitées
+    required: true
+    classification: public
+  - name: chiffre_affaires
+    logicalType: number
+    physicalType: DECIMAL(12,2)
+    description: Chiffre d'affaires TTC
+    required: true
+    classification: public
+  quality:
+  - type: sql
+    description: Règle grain_unique
+    query: SELECT COUNT(*) FROM (SELECT mois, tranche_age, type_groupe, pays FROM ${object} GROUP BY 1, 2, 3, 4
+      HAVING COUNT(*) > 1)
+    mustBe: 0
+    dimension: uniqueness
+slaProperties:
+- property: frequency
+  value: 1
+  unit: d
+  description: Mise à jour chaque nuit
+- property: timeOfAvailability
+  value: 06:00
+  description: Heure à laquelle les chiffres de la veille sont disponibles
+roles:
+- role: lecteur_marketing
+  access: read
+  description: Lecture du data product par marketing
+customProperties:
+- property: donnees_personnelles
+  value: 'non : agrégats, aucune colonne taguée dcp'
+- property: catalogue_unity
+  value: camping.gold.dp_profil_clientele

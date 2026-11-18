@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:cartano="http://cartano.app/bpmn"
+                  id="cartano_definitions"
+                  targetNamespace="http://cartano.app/bpmn">
+  <bpmn:dataStore id="data_store_ds" name="Souhaite séjourner" />
+  <bpmn:collaboration id="as-is-process_collaboration">
+    <bpmn:participant id="as-is-process_participant" name="AS-IS Process" processRef="as-is-process" />
+  </bpmn:collaboration>
+  <bpmn:process id="as-is-process" name="AS-IS Process" isExecutable="false">
+    <bpmn:laneSet id="as-is-process_lanes">
+      <bpmn:lane id="lane_demandeur" name="Demandeur">
+        <bpmn:flowNodeRef>task</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gateway</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="lane_valideur" name="Valideur" />
+      <bpmn:lane id="lane_executant" name="Exécutant" />
+    </bpmn:laneSet>
+    <bpmn:task id="task" name="Choisir le canal et les dates">
+      <bpmn:outgoing>flow_task_gateway</bpmn:outgoing>
+      <bpmn:ioSpecification id="task_io">
+        <bpmn:dataInput id="task_in_data_store" />
+        <bpmn:inputSet id="task_inputs">
+          <bpmn:dataInputRefs>task_in_data_store</bpmn:dataInputRefs>
+        </bpmn:inputSet>
+        <bpmn:outputSet id="task_outputs">
+        </bpmn:outputSet>
+      </bpmn:ioSpecification>
+      <bpmn:dataInputAssociation id="da_data_store_task">
+        <bpmn:sourceRef>data_store</bpmn:sourceRef>
+        <bpmn:targetRef>task_in_data_store</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gateway" name="">
+      <bpmn:incoming>flow_task_gateway</bpmn:incoming>
+    </bpmn:exclusiveGateway>
+    <bpmn:dataStoreReference id="data_store" name="Souhaite séjourner" dataStoreRef="data_store_ds" />
+    <bpmn:sequenceFlow id="flow_task_gateway" sourceRef="task" targetRef="gateway" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="cartano_diagram">
+    <bpmndi:BPMNPlane id="cartano_plane" bpmnElement="as-is-process_collaboration">
+      <bpmndi:BPMNShape id="as-is-process_participant_di" bpmnElement="as-is-process_participant" isHorizontal="true">
+        <dc:Bounds x="-30" y="0" width="930" height="474" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="lane_demandeur_di" bpmnElement="lane_demandeur" isHorizontal="true">
+        <dc:Bounds x="0" y="0" width="900" height="158" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="lane_valideur_di" bpmnElement="lane_valideur" isHorizontal="true">
+        <dc:Bounds x="0" y="158" width="900" height="158" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="lane_executant_di" bpmnElement="lane_executant" isHorizontal="true">
+        <dc:Bounds x="0" y="316" width="900" height="158" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="data_store_di" bpmnElement="data_store">
+        <dc:Bounds x="117" y="47" width="56" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_di" bpmnElement="task">
+        <dc:Bounds x="279" y="38" width="136" height="74" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gateway_di" bpmnElement="gateway">
+        <dc:Bounds x="495" y="44" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="da_data_store_task_di" bpmnElement="da_data_store_task">
+        <di:waypoint x="173" y="72" />
+        <di:waypoint x="279" y="74" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_task_gateway_di" bpmnElement="flow_task_gateway">
+        <di:waypoint x="415" y="75" />
+        <di:waypoint x="455" y="75" />
+        <di:waypoint x="455" y="72" />
+        <di:waypoint x="495" y="72" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

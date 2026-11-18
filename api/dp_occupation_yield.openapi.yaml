@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: API du data product dp_occupation_yield
+  version: 1.0.0
+  description: |
+    Occupation, chiffre d'affaires et part du direct, par nuit, camping et catégorie.
+    Source : table camping.gold.dp_occupation_yield (une ligne par nuit, camping et catégorie).
+    Mise à jour chaque nuit, données de la veille disponibles à 6 h.
+    Aucune donnée personnelle : seulement des agrégats.
+  contact:
+    name: Direction commerciale (propriétaire du data product)
+servers:
+  - url: https://api.example.org/camping/v1
+    description: Adresse fictive, à remplacer par celle de l'entrepôt SQL ou de la passerelle choisie
+security:
+  - bearerAuth: []
+tags:
+  - name: occupation
+    description: Occupation et chiffre d'affaires
+paths:
+  /occupation:
+    get:
+      tags: [occupation]
+      operationId: listerOccupation
+      summary: Lister l'occupation par nuit, camping et catégorie
+      description: |
+        Retourne les lignes du data product pour une période.
+        La nuit du départ n'est jamais comptée : un séjour du 31 août au 1er septembre compte la nuit du 31 août.
+      parameters:
+        - name: date_debut
+          in: query
+          required: true
+          description: Première nuit incluse (format AAAA-MM-JJ)
+          schema: { type: string, format: date, example: '2025-08-24' }
+        - name: date_fin
+          in: query
+          required: false
+          description: Dernière nuit incluse ; par défaut, date_debut
+          schema: { type: string, format: date, example: '2025-08-31' }
+        - name: camping
+          in: query
+          required: false
+          description: Nom du camping
+          schema: { type: string }
+        - name: categorie_code
+          in: query
+          required: false
+          description: NU (nu), MH (mobil-home) ou PR (premium)
+          schema: { type: string, enum: [NU, MH, PR] }
+      responses:
+        '200':
+          description: Les lignes du data product, triées par nuit puis par catégorie
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OccupationNuit' }
+        '400':
+          description: Paramètre invalide (date mal formée, date_fin avant date_debut)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erreur' }
+        '401': { $ref: '#/components/responses/NonAutorise' }
+        '403': { $ref: '#/components/responses/Interdit' }
+  /occupation/global:
+    get:
+      tags: [occupation]
+      operationId: tauxGlobal
+      summary: Taux d'occupation global d'une nuit
+      description: |
+        Calcule le taux global par somme : somme des emplacements occupés divisée par la somme des emplacements disponibles.
+        Il ne s'agit pas de la moyenne des taux par catégorie.
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: La nuit (format AAAA-MM-JJ)
+          schema: { type: string, format: date, example: '2025-08-31' }
+        - name: camping
+          in: query
+          required: false
+          description: Nom du camping ; sans valeur, tous les campings
+          schema: { type: string }
+      responses:
+        '200':
+          description: Le taux global de la nuit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TauxGlobal' }
+              example:
+                date_nuit: '2025-08-31'
+                emplacements_occupes: 8
+                emplacements_disponibles: 12
+                taux_global: 0.6667
+        '400':
+          description: Date mal formée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erreur' }
+        '404':
+          description: Aucune donnée pour cette nuit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erreur' }
+        '401': { $ref: '#/components/responses/NonAutorise' }
+        '403': { $ref: '#/components/responses/Interdit' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Jeton d'accès ; le droit de lecture du data product est géré par Unity Catalog
+  responses:
+    NonAutorise:
+      description: Jeton absent ou invalide
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erreur' }
+    Interdit:
+      description: Le compte n'a pas le droit de lire ce data product
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erreur' }
+  schemas:
+    OccupationNuit:
+      type: object
+      description: Une ligne du data product (une nuit, un camping, une catégorie)
+      required: [date_nuit, camping, categorie_code, emplacements_disponibles, emplacements_occupes, taux_occupation, chiffre_affaires, nuitees_directes]
+      properties:
+        date_nuit: { type: string, format: date, description: La nuit }
+        camping: { type: string, description: Camping }
+        categorie_code: { type: string, enum: [NU, MH, PR], description: 'NU, MH ou PR' }
+        emplacements_disponibles: { type: integer, minimum: 0, description: Emplacements de cette catégorie dans ce camping }
+        emplacements_occupes: { type: integer, minimum: 0, description: Emplacements occupés cette nuit-là }
+        taux_occupation: { type: number, minimum: 0, maximum: 1, description: 'occupés divisés par disponibles ; le taux global se recalcule avec les sommes' }
+        chiffre_affaires: { type: number, description: "Chiffre d'affaires TTC de la nuit, en euros" }
+        nuitees_directes: { type: integer, minimum: 0, description: Nuitées vendues en direct }
+        part_direct: { type: number, nullable: true, minimum: 0, maximum: 1, description: nuitées directes divisées par nuitées occupées }
+      example:
+        date_nuit: '2025-08-31'
+        camping: Les Dunes
+        categorie_code: NU
+        emplacements_disponibles: 6
+        emplacements_occupes: 5
+        taux_occupation: 0.8333
+        chiffre_affaires: 176.18
+        nuitees_directes: 2
+        part_direct: 0.4
+    TauxGlobal:
+      type: object
+      required: [date_nuit, emplacements_occupes, emplacements_disponibles, taux_global]
+      properties:
+        date_nuit: { type: string, format: date }
+        emplacements_occupes: { type: integer, minimum: 0 }
+        emplacements_disponibles: { type: integer, minimum: 0 }
+        taux_global: { type: number, minimum: 0, maximum: 1 }
+    Erreur:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: parametre_invalide }
+        message: { type: string, example: date_fin doit être postérieure à date_debut }

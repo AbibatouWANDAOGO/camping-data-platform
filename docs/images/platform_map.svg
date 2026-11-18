@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Camping Data Platform: from source files to four data products on a Databricks lakehouse</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#52514e"/>
+    </marker>
+    <style>
+      .h { font-size: 22px; font-weight: 700; fill: #0b0b0b; }
+      .s { font-size: 13px; fill: #52514e; }
+      .t { font-size: 15px; font-weight: 700; fill: #0b0b0b; }
+      .d { font-size: 12px; fill: #52514e; }
+      .n { font-size: 12px; font-weight: 700; fill: #0b0b0b; }
+      .box { fill: #ffffff; stroke: #d6d4cf; stroke-width: 1.5; }
+      .bronze { fill: #fbf1e6; stroke: #c98a4b; stroke-width: 1.5; }
+      .silver { fill: #f1f3f6; stroke: #8a96a8; stroke-width: 1.5; }
+      .gold { fill: #fdf6d8; stroke: #c9a227; stroke-width: 1.5; }
+      .gov { fill: #f3f2ee; stroke: #8a8984; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .lbl { font-size: 11px; fill: #52514e; }
+      .badge { fill: #2a78d6; }
+      .bt { font-size: 11px; font-weight: 700; fill: #ffffff; }
+      .flow { stroke: #52514e; stroke-width: 1.8; fill: none; }
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#fcfcfb"/>
+  <text x="30" y="40" class="h">Camping Data Platform: the lakehouse, layer by layer</text>
+  <text x="30" y="62" class="s">Four campsites, 950 pitches. Every night: files land in a volume, then bronze, silver, gold. Figures below are from the sample dataset run on Databricks.</text>
+
+  <!-- Sources -->
+  <rect x="30" y="90" width="170" height="410" rx="10" class="box"/>
+  <text x="46" y="118" class="t">Sources</text>
+  <text x="46" y="138" class="d">never modified</text>
+  <text x="46" y="170" class="n">PMS (PostgreSQL)</text>
+  <text x="46" y="188" class="d">stays, client records</text>
+  <text x="46" y="220" class="n">Online agencies</text>
+  <text x="46" y="238" class="d">one CSV export a day</text>
+  <text x="46" y="270" class="n">Connected meters</text>
+  <text x="46" y="288" class="d">water, power, every</text>
+  <text x="46" y="304" class="d">15 minutes</text>
+  <text x="46" y="336" class="n">Consent log</text>
+  <text x="46" y="354" class="d">accept, refuse, withdraw,</text>
+  <text x="46" y="370" class="d">dated and versioned</text>
+  <text x="46" y="402" class="n">Reference data</text>
+  <text x="46" y="420" class="d">campsites, pitches,</text>
+  <text x="46" y="436" class="d">purposes and legal bases</text>
+  <text x="46" y="476" class="d">8 files</text>
+
+  <line x1="200" y1="295" x2="236" y2="295" class="flow" marker-end="url(#a)"/>
+
+  <!-- Bronze -->
+  <rect x="240" y="90" width="200" height="410" rx="10" class="bronze"/>
+  <rect x="384" y="98" width="48" height="20" rx="10" class="badge"/><text x="408" y="112" class="bt" text-anchor="middle">nb 00</text>
+  <text x="256" y="124" class="t">Bronze</text>
+  <text x="256" y="144" class="d">volume « depot », one</text>
+  <text x="256" y="160" class="d">folder per source</text>
+  <text x="256" y="192" class="n">8 tables, all text</text>
+  <text x="256" y="210" class="d">file name and load time</text>
+  <text x="256" y="226" class="d">kept; nothing corrected</text>
+  <text x="256" y="262" class="d">16 stays · 3 agency</text>
+  <text x="256" y="278" class="d">bookings · 132 meter</text>
+  <text x="256" y="294" class="d">readings · 18 client</text>
+  <text x="256" y="310" class="d">records · 25 consent</text>
+  <text x="256" y="326" class="d">choices · 5 purposes</text>
+
+  <line x1="440" y1="295" x2="476" y2="295" class="flow" marker-end="url(#a)"/>
+
+  <!-- Silver -->
+  <rect x="480" y="90" width="250" height="410" rx="10" class="silver"/>
+  <rect x="674" y="98" width="48" height="20" rx="10" class="badge"/><text x="698" y="112" class="bt" text-anchor="middle">nb 02</text>
+  <text x="496" y="124" class="t">Silver</text>
+  <text x="496" y="144" class="d">15 typed tables, from the data model</text>
+  <text x="496" y="178" class="n">15 valid stays, 1 rejected</text>
+  <text x="496" y="194" class="d">S016 leaves before it arrives:</text>
+  <text x="496" y="210" class="d">kept apart with its reason</text>
+  <text x="496" y="240" class="n">3 of 3 agency bookings matched</text>
+  <text x="496" y="256" class="d">same pitch, dates and channel</text>
+  <text x="496" y="286" class="n">62 nights (nuitées)</text>
+  <text x="496" y="302" class="d">sequence() + explode(); the night</text>
+  <text x="496" y="318" class="d">of departure never counts</text>
+  <text x="496" y="348" class="n">quarter-hour consumption</text>
+  <text x="496" y="364" class="d">meter reset handled (E03, 2 a.m.)</text>
+  <text x="496" y="394" class="n">client split in two</text>
+  <text x="496" y="410" class="d">pseudonymised client / protected</text>
+  <text x="496" y="426" class="d">identity; undated consent dropped;</text>
+  <text x="496" y="442" class="d">family status not loaded</text>
+
+  <line x1="730" y1="295" x2="766" y2="295" class="flow" marker-end="url(#a)"/>
+
+  <!-- Gold -->
+  <rect x="770" y="90" width="210" height="410" rx="10" class="gold"/>
+  <text x="786" y="124" class="t">Gold: 4 data products</text>
+  <text x="786" y="144" class="d">aggregates only, one owner each</text>
+  <text x="786" y="178" class="n">dp_occupation_yield</text>
+  <text x="786" y="194" class="d">31 Aug: 8 of 12 pitches,</text>
+  <text x="786" y="210" class="d">66.7 % (summed, not averaged)</text>
+  <text x="786" y="242" class="n">dp_taxe_sejour</text>
+  <text x="786" y="258" class="d">August: 92 adult nights,</text>
+  <text x="786" y="274" class="d">€55.20; children exempt</text>
+  <text x="786" y="306" class="n">dp_conso_anomalies</text>
+  <text x="786" y="322" class="d">leak on E07, midnight to</text>
+  <text x="786" y="338" class="d">6 a.m., on an empty pitch</text>
+  <text x="786" y="370" class="n">dp_profil_clientele</text>
+  <text x="786" y="386" class="d">8 consenting clients only:</text>
+  <text x="786" y="402" class="d">last dated choice must be « yes »</text>
+
+  <line x1="980" y1="295" x2="1016" y2="295" class="flow" marker-end="url(#a)"/>
+
+  <!-- Uses -->
+  <rect x="1020" y="90" width="150" height="410" rx="10" class="box"/>
+  <text x="1036" y="124" class="t">Uses</text>
+  <text x="1036" y="158" class="n">Genie</text>
+  <text x="1036" y="174" class="d">questions in French,</text>
+  <text x="1036" y="190" class="d">gold tables only</text>
+  <text x="1036" y="222" class="n">SQL warehouse</text>
+  <text x="1036" y="238" class="d">+ OpenAPI spec</text>
+  <text x="1036" y="270" class="n">Dashboards</text>
+  <text x="1036" y="286" class="d">designed, not built</text>
+  <text x="1036" y="330" class="d">ready at 6 a.m.;</text>
+  <text x="1036" y="346" class="d">leak alerts at 7 a.m.</text>
+
+  <!-- Governance band -->
+  <rect x="30" y="524" width="1140" height="210" rx="12" class="gov"/>
+  <text x="50" y="554" class="t">Around the layers: governance, quality, privacy</text>
+  <g>
+    <rect x="50" y="570" width="260" height="146" rx="10" class="box"/>
+    <rect x="254" y="578" width="48" height="20" rx="10" class="badge"/><text x="278" y="592" class="bt" text-anchor="middle">nb 01</text>
+    <text x="66" y="600" class="t">Tables and protections</text>
+    <text x="66" y="624" class="d">19 tables from the model, composite</text>
+    <text x="66" y="640" class="d">keys, CHECK constraints (dates,</text>
+    <text x="66" y="656" class="d">rate between 0 and 1), e-mail and</text>
+    <text x="66" y="672" class="d">phone masked, « dcp » tag on every</text>
+    <text x="66" y="688" class="d">personal column</text>
+  </g>
+  <g>
+    <rect x="330" y="570" width="260" height="146" rx="10" class="box"/>
+    <rect x="534" y="578" width="48" height="20" rx="10" class="badge"/><text x="558" y="592" class="bt" text-anchor="middle">nb 03</text>
+    <text x="346" y="600" class="t">23 automatic controls</text>
+    <text x="346" y="624" class="d">13 rules (one row per grain, tax =</text>
+    <text x="346" y="640" class="d">nights × rate, revenue within €0.10…),</text>
+    <text x="346" y="656" class="d">2 security checks, 8 sample values;</text>
+    <text x="346" y="672" class="d">the job stops on the first failure and</text>
+    <text x="346" y="688" class="d">yesterday's figures stay published</text>
+  </g>
+  <g>
+    <rect x="610" y="570" width="260" height="146" rx="10" class="box"/>
+    <rect x="814" y="578" width="48" height="20" rx="10" class="badge"/><text x="838" y="592" class="bt" text-anchor="middle">nb 04</text>
+    <text x="626" y="600" class="t">GDPR purge</text>
+    <text x="626" y="624" class="d">identity erased 36 months after last</text>
+    <text x="626" y="640" class="d">activity, ID number 6 months after</text>
+    <text x="626" y="656" class="d">departure, in silver AND bronze;</text>
+    <text x="626" y="672" class="d">purge log without identity; Delta</text>
+    <text x="626" y="688" class="d">history checked, then VACUUM</text>
+  </g>
+  <g>
+    <rect x="890" y="570" width="260" height="146" rx="10" class="box"/>
+    <text x="906" y="600" class="t">Unity Catalog</text>
+    <text x="906" y="624" class="d">catalog « camping », schemas bronze,</text>
+    <text x="906" y="640" class="d">silver, gold; lineage from each data</text>
+    <text x="906" y="656" class="d">product back to its file; read rights</text>
+    <text x="906" y="672" class="d">per business team designed (GRANT</text>
+    <text x="906" y="688" class="d">scripts written)</text>
+  </g>
+</svg>

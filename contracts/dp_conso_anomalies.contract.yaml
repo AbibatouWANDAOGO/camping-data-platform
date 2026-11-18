@@ -1,0 +1,103 @@
+# Contrat de données au format ODCS (Open Data Contract Standard) v3 : dp_conso_anomalies
+# Validé avec le schéma JSON officiel ODCS (bitol-io/open-data-contract-standard, v3.0.2 et v3.1.0).
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:datacontract:les-pins-d-argent:dp_conso_anomalies
+name: dp_conso_anomalies
+version: 1.0.0
+status: draft
+domain: ressources-et-consommation
+dataProduct: dp_conso_anomalies
+tenant: les-pins-d-argent
+description:
+  purpose: Répondre à la question « Y a-t-il une fuite quelque part ce matin ? ».
+  limitations: Fuite probable = 40 L ou plus pendant chacune des six heures entre 0 h et 6 h ; après une remise
+    à zéro, la consommation est la nouvelle valeur.
+  usage: Alertes de fuite à 7 h ; les fuites sur emplacement vide sont les plus urgentes.
+team:
+- username: services-techniques
+  role: owner
+- username: equipe-data
+  role: producer
+schema:
+- name: dp_conso_anomalies
+  physicalName: camping.gold.dp_conso_anomalies
+  physicalType: table
+  description: 'Data product technique : consommation et alertes de fuite. Grain : un emplacement x une heure'
+  properties:
+  - name: emplacement_id
+    logicalType: string
+    physicalType: STRING
+    description: Emplacement
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 1
+    classification: public
+  - name: heure
+    logicalType: date
+    physicalType: TIMESTAMP
+    description: Heure pleine
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 2
+    logicalTypeOptions:
+      format: yyyy-MM-dd HH:mm:ss
+    classification: public
+  - name: kwh
+    logicalType: number
+    physicalType: DECIMAL(10,2)
+    description: kWh consommés pendant l'heure
+    required: false
+    classification: public
+  - name: litres
+    logicalType: number
+    physicalType: DECIMAL(12,2)
+    description: Litres consommés pendant l'heure
+    required: false
+    classification: public
+  - name: remise_a_zero
+    logicalType: boolean
+    physicalType: BOOLEAN
+    description: Un compteur a redémarré pendant l'heure
+    required: true
+    classification: public
+  - name: fuite_probable
+    logicalType: boolean
+    physicalType: BOOLEAN
+    description: 40 L ou plus chaque heure entre 0 h et 6 h
+    required: true
+    classification: public
+  - name: emplacement_occupe
+    logicalType: boolean
+    physicalType: BOOLEAN
+    description: Emplacement occupé cette nuit-là ; fuite sur emplacement vide = urgence
+    required: true
+    classification: public
+  quality:
+  - type: sql
+    description: Règle fuite_heures_nuit
+    query: SELECT COUNT(*) FROM ${object} WHERE fuite_probable AND HOUR(heure) NOT BETWEEN 0 AND 5
+    mustBe: 0
+    dimension: accuracy
+  - type: sql
+    description: Règle grain_unique
+    query: SELECT COUNT(*) FROM (SELECT emplacement_id, heure FROM ${object} GROUP BY 1, 2 HAVING COUNT(*) > 1)
+    mustBe: 0
+    dimension: uniqueness
+slaProperties:
+- property: frequency
+  value: 1
+  unit: d
+  description: Mise à jour chaque nuit
+- property: timeOfAvailability
+  value: 07:00
+  description: Heure à laquelle les chiffres de la veille sont disponibles
+roles:
+- role: lecteur_services_techniques
+  access: read
+  description: Lecture du data product par services-techniques
+customProperties:
+- property: donnees_personnelles
+  value: 'non : agrégats, aucune colonne taguée dcp'
+- property: catalogue_unity
+  value: camping.gold.dp_conso_anomalies

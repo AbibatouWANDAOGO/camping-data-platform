@@ -1,0 +1,122 @@
+# Contrat de données au format ODCS (Open Data Contract Standard) v3 : dp_occupation_yield
+# Validé avec le schéma JSON officiel ODCS (bitol-io/open-data-contract-standard, v3.0.2 et v3.1.0).
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:datacontract:les-pins-d-argent:dp_occupation_yield
+name: dp_occupation_yield
+version: 1.0.0
+status: draft
+domain: reservation-et-sejours
+dataProduct: dp_occupation_yield
+tenant: les-pins-d-argent
+description:
+  purpose: Répondre à la question « Combien d'emplacements étaient occupés hier soir, et à quel prix ? ».
+  limitations: La nuit du départ n'est pas comptée ; une saison n'est comparable à N-1 qu'avec l'historique des
+    catégories ; aucune donnée identifiante.
+  usage: 'Tableau de bord AI/BI et espace Genie de la direction commerciale ; ne pas moyenner les taux : recalculer
+    le taux global avec les sommes.'
+team:
+- username: direction-commerciale
+  role: owner
+- username: equipe-data
+  role: producer
+schema:
+- name: dp_occupation_yield
+  physicalName: camping.gold.dp_occupation_yield
+  physicalType: table
+  description: 'Data product commercial : occupation, CA et canaux. Grain : une nuit x un camping x une catégorie'
+  properties:
+  - name: date_nuit
+    logicalType: date
+    physicalType: DATE
+    description: La nuit
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 1
+    classification: public
+  - name: camping
+    logicalType: string
+    physicalType: STRING
+    description: Camping
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 2
+    classification: public
+  - name: categorie_code
+    logicalType: string
+    physicalType: STRING
+    description: NU, MH ou PR
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 3
+    classification: public
+  - name: emplacements_disponibles
+    logicalType: integer
+    physicalType: INT
+    description: Emplacements de cette catégorie dans ce camping
+    required: true
+    classification: public
+  - name: emplacements_occupes
+    logicalType: integer
+    physicalType: INT
+    description: Emplacements occupés cette nuit-là
+    required: true
+    classification: public
+  - name: taux_occupation
+    logicalType: number
+    physicalType: DECIMAL(5,4)
+    description: occupés / disponibles. Le taux global se recalcule avec les sommes, jamais par moyenne des taux
+    required: true
+    classification: public
+  - name: chiffre_affaires
+    logicalType: number
+    physicalType: DECIMAL(12,2)
+    description: Chiffre d'affaires TTC de la nuit
+    required: true
+    classification: public
+  - name: nuitees_directes
+    logicalType: integer
+    physicalType: INT
+    description: Nuitées vendues en direct (pour pondérer la part du direct)
+    required: true
+    classification: public
+  - name: part_direct
+    logicalType: number
+    physicalType: DECIMAL(5,4)
+    description: nuitées directes / nuitées occupées
+    required: false
+    classification: public
+  quality:
+  - type: sql
+    description: Règle taux_valide
+    query: SELECT COUNT(*) FROM ${object} WHERE taux_occupation NOT BETWEEN 0 AND 1
+    mustBe: 0
+    dimension: accuracy
+  - type: sql
+    description: Règle occupes_valides
+    query: SELECT COUNT(*) FROM ${object} WHERE emplacements_occupes > emplacements_disponibles
+    mustBe: 0
+    dimension: accuracy
+  - type: sql
+    description: Règle grain_unique
+    query: SELECT COUNT(*) FROM (SELECT date_nuit, camping, categorie_code FROM ${object} GROUP BY 1, 2, 3 HAVING
+      COUNT(*) > 1)
+    mustBe: 0
+    dimension: uniqueness
+slaProperties:
+- property: frequency
+  value: 1
+  unit: d
+  description: Mise à jour chaque nuit
+- property: timeOfAvailability
+  value: 06:00
+  description: Heure à laquelle les chiffres de la veille sont disponibles
+roles:
+- role: lecteur_direction_commerciale
+  access: read
+  description: Lecture du data product par direction-commerciale
+customProperties:
+- property: donnees_personnelles
+  value: 'non : agrégats, aucune colonne taguée dcp'
+- property: catalogue_unity
+  value: camping.gold.dp_occupation_yield

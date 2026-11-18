@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_PROC_TO_BE" targetNamespace="http://pins-d-argent.example/bpmn" exporter="Claude" exporterVersion="1.0">
+  <bpmn:collaboration id="Collab_TO_BE">
+    <bpmn:participant id="Participant_PA" name="Réserver et accueillir un client (TO-BE)" processRef="Process_TO_BE"/>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_TO_BE" name="Process_TO-BE_Reserver_Accueillir" isExecutable="false">
+    <bpmn:documentation>Process TO-BE « Réserver et accueillir un client » des Pins d'Argent. Le PMS et les agences ne sont pas modifiés ; la plateforme de données reçoit leurs fichiers chaque nuit (2 h export OTA, 4 h 30 tables du PMS), charge le bronze à 5 h, rapproche OTA et PMS et écarte les séjours invalides avec leur motif (silver), calcule dp_occupation_yield (gold), efface les données personnelles échues (5 h 15) puis contrôle la qualité (5 h 20) : si un contrôle échoue, le job s'arrête, l'équipe data est prévenue et les chiffres de la veille restent affichés ; sinon les tableaux de bord sont à jour à 6 h. Améliorations : rapprochement automatique, séjours incohérents rejetés et signalés, consentements tracés, identité protégée à part, pilotage quotidien. Hypothèses : le séjour rejeté est signalé à l'accueil pour correction dans le PMS ; remise d'un badge ; synchronisation OTA vers PMS via un channel manager.</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_TOBE">
+      <bpmn:lane id="Lane_Client" name="Client">
+        <bpmn:flowNodeRef>Start_Souhait</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Canal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Canal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Ligne</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_OTA" name="Agence en ligne (OTA)">
+        <bpmn:flowNodeRef>Task_OTA</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PMS" name="PMS (système)">
+        <bpmn:flowNodeRef>Task_PMS_Creer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PMS_Direct</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Accueil" name="Accueil">
+        <bpmn:flowNodeRef>Task_Recevoir</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Saisir</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Join</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Accueillir</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Controle</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Remise</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Installe</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Plateforme" name="Plateforme (nuit)">
+        <bpmn:flowNodeRef>Timer_Nuit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Depot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Bronze</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Silver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Valide</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Gold</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Purge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Qualite</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Qualite</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Arret</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Rejet</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Rejet</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction">
+        <bpmn:flowNodeRef>Task_Publier</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_OK</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Souhait" name="Souhaite séjourner">
+      <bpmn:outgoing>SF_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_Canal" name="Choisir le canal et les dates">
+      <bpmn:incoming>SF_1</bpmn:incoming>
+      <bpmn:outgoing>SF_2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Canal" name="Canal ?">
+      <bpmn:incoming>SF_2</bpmn:incoming>
+      <bpmn:outgoing>SF_3</bpmn:outgoing>
+      <bpmn:outgoing>SF_4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_Ligne" name="Réserver sur le site de l'agence">
+      <bpmn:incoming>SF_3</bpmn:incoming>
+      <bpmn:outgoing>SF_5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_OTA" name="Enregistrer la réservation (agence)">
+      <bpmn:incoming>SF_5</bpmn:incoming>
+      <bpmn:outgoing>SF_6</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DA_1"><bpmn:targetRef>Doc_ExportOTA</bpmn:targetRef></bpmn:dataOutputAssociation>
+    </bpmn:task>
+    <bpmn:serviceTask id="Task_PMS_Creer" name="Créer le séjour (autre identifiant)">
+      <bpmn:incoming>SF_6</bpmn:incoming>
+      <bpmn:outgoing>SF_7</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_PMS_Direct" name="Enregistrer séjour, fiche et consentements">
+      <bpmn:incoming>SF_10</bpmn:incoming>
+      <bpmn:outgoing>SF_11</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_Recevoir" name="Vérifier disponibilités et tarifs">
+      <bpmn:incoming>SF_4</bpmn:incoming>
+      <bpmn:outgoing>SF_9</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_Saisir" name="Saisir séjour et fiche client">
+      <bpmn:incoming>SF_9</bpmn:incoming>
+      <bpmn:outgoing>SF_10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Join" name="">
+      <bpmn:incoming>SF_7</bpmn:incoming>
+      <bpmn:incoming>SF_11</bpmn:incoming>
+      <bpmn:outgoing>SF_12</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_Accueillir" name="Accueillir le client à l'arrivée">
+      <bpmn:incoming>SF_12</bpmn:incoming>
+      <bpmn:outgoing>SF_13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_Controle" name="Contrôler la fiche, noter la pièce d'identité (étrangers)">
+      <bpmn:incoming>SF_13</bpmn:incoming>
+      <bpmn:outgoing>SF_14</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:manualTask id="Task_Remise" name="Indiquer l'emplacement, remettre le badge (hyp.)">
+      <bpmn:incoming>SF_14</bpmn:incoming>
+      <bpmn:outgoing>SF_15</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="End_Installe" name="Client installé">
+      <bpmn:incoming>SF_15</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="Timer_Nuit" name="Chaque nuit, dès 2 h">
+      <bpmn:outgoing>SF_20</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="Timer_Def_Nuit"><bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/P1D</bpmn:timeCycle></bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Task_Depot" name="Recevoir l'export OTA (2 h) et les tables du PMS (4 h 30)">
+      <bpmn:incoming>SF_20</bpmn:incoming>
+      <bpmn:outgoing>SF_21</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Bronze" name="Charger le bronze, tel quel (5 h)">
+      <bpmn:incoming>SF_21</bpmn:incoming>
+      <bpmn:outgoing>SF_22</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Silver" name="Typer, rapprocher OTA et PMS, découper en nuitées (silver)">
+      <bpmn:incoming>SF_22</bpmn:incoming>
+      <bpmn:outgoing>SF_23</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Valide" name="Séjour valide ?">
+      <bpmn:incoming>SF_23</bpmn:incoming>
+      <bpmn:outgoing>SF_24</bpmn:outgoing>
+      <bpmn:outgoing>SF_25</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Rejet" name="Écarter le séjour avec son motif (sejour_rejete)">
+      <bpmn:incoming>SF_25</bpmn:incoming>
+      <bpmn:outgoing>SF_26</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Rejet" name="Séjour signalé pour correction (hyp.)">
+      <bpmn:incoming>SF_26</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_Gold" name="Calculer dp_occupation_yield (gold)">
+      <bpmn:incoming>SF_24</bpmn:incoming>
+      <bpmn:outgoing>SF_27</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Purge" name="Effacer les données personnelles échues (5 h 15)">
+      <bpmn:incoming>SF_27</bpmn:incoming>
+      <bpmn:outgoing>SF_28</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Qualite" name="Contrôler la qualité (5 h 20)">
+      <bpmn:incoming>SF_28</bpmn:incoming>
+      <bpmn:outgoing>SF_29</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Qualite" name="Contrôles OK ?">
+      <bpmn:incoming>SF_29</bpmn:incoming>
+      <bpmn:outgoing>SF_30</bpmn:outgoing>
+      <bpmn:outgoing>SF_31</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Arret" name="Job arrêté : alerte à l'équipe data, chiffres de la veille conservés">
+      <bpmn:incoming>SF_30</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_Publier" name="Mettre à jour les tableaux de bord (6 h)">
+      <bpmn:incoming>SF_31</bpmn:incoming>
+      <bpmn:outgoing>SF_32</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_OK" name="Chiffres de la veille lisibles">
+      <bpmn:incoming>SF_32</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SF_1" sourceRef="Start_Souhait" targetRef="Task_Canal"/>
+    <bpmn:sequenceFlow id="SF_2" sourceRef="Task_Canal" targetRef="GW_Canal"/>
+    <bpmn:sequenceFlow id="SF_3" sourceRef="GW_Canal" targetRef="Task_Ligne" name="en ligne"/>
+    <bpmn:sequenceFlow id="SF_4" sourceRef="GW_Canal" targetRef="Task_Recevoir" name="en direct"/>
+    <bpmn:sequenceFlow id="SF_5" sourceRef="Task_Ligne" targetRef="Task_OTA"/>
+    <bpmn:sequenceFlow id="SF_6" sourceRef="Task_OTA" targetRef="Task_PMS_Creer"/>
+    <bpmn:sequenceFlow id="SF_7" sourceRef="Task_PMS_Creer" targetRef="GW_Join"/>
+    <bpmn:sequenceFlow id="SF_9" sourceRef="Task_Recevoir" targetRef="Task_Saisir"/>
+    <bpmn:sequenceFlow id="SF_10" sourceRef="Task_Saisir" targetRef="Task_PMS_Direct"/>
+    <bpmn:sequenceFlow id="SF_11" sourceRef="Task_PMS_Direct" targetRef="GW_Join"/>
+    <bpmn:sequenceFlow id="SF_12" sourceRef="GW_Join" targetRef="Task_Accueillir"/>
+    <bpmn:sequenceFlow id="SF_13" sourceRef="Task_Accueillir" targetRef="Task_Controle"/>
+    <bpmn:sequenceFlow id="SF_14" sourceRef="Task_Controle" targetRef="Task_Remise"/>
+    <bpmn:sequenceFlow id="SF_15" sourceRef="Task_Remise" targetRef="End_Installe"/>
+    <bpmn:sequenceFlow id="SF_20" sourceRef="Timer_Nuit" targetRef="Task_Depot"/>
+    <bpmn:sequenceFlow id="SF_21" sourceRef="Task_Depot" targetRef="Task_Bronze"/>
+    <bpmn:sequenceFlow id="SF_22" sourceRef="Task_Bronze" targetRef="Task_Silver"/>
+    <bpmn:sequenceFlow id="SF_23" sourceRef="Task_Silver" targetRef="GW_Valide"/>
+    <bpmn:sequenceFlow id="SF_24" sourceRef="GW_Valide" targetRef="Task_Gold" name="oui"/>
+    <bpmn:sequenceFlow id="SF_25" sourceRef="GW_Valide" targetRef="Task_Rejet" name="non"/>
+    <bpmn:sequenceFlow id="SF_26" sourceRef="Task_Rejet" targetRef="End_Rejet"/>
+    <bpmn:sequenceFlow id="SF_27" sourceRef="Task_Gold" targetRef="Task_Purge"/>
+    <bpmn:sequenceFlow id="SF_28" sourceRef="Task_Purge" targetRef="Task_Qualite"/>
+    <bpmn:sequenceFlow id="SF_29" sourceRef="Task_Qualite" targetRef="GW_Qualite"/>
+    <bpmn:sequenceFlow id="SF_30" sourceRef="GW_Qualite" targetRef="End_Arret" name="non"/>
+    <bpmn:sequenceFlow id="SF_31" sourceRef="GW_Qualite" targetRef="Task_Publier" name="oui"/>
+    <bpmn:sequenceFlow id="SF_32" sourceRef="Task_Publier" targetRef="End_OK"/>
+    <bpmn:dataObject id="DataObject_ExportOTA"/>
+    <bpmn:dataObjectReference id="Doc_ExportOTA" name="Export OTA (un fichier par jour)" dataObjectRef="DataObject_ExportOTA"/>
+    <bpmn:textAnnotation id="TA_1"><bpmn:text>Amélioration : rapprochement OTA/PMS automatique (silver.reservation_ota), plus de doublon compté deux fois</bpmn:text></bpmn:textAnnotation>
+    <bpmn:association id="As_TA_1" sourceRef="Task_Silver" targetRef="TA_1" associationDirection="None"/>
+    <bpmn:textAnnotation id="TA_2"><bpmn:text>Amélioration : consentements journalisés (date, version du texte, canal) : la preuve est conservée</bpmn:text></bpmn:textAnnotation>
+    <bpmn:association id="As_TA_2" sourceRef="Task_PMS_Direct" targetRef="TA_2" associationDirection="None"/>
+    <bpmn:textAnnotation id="TA_3"><bpmn:text>Amélioration : identité rangée à part, e-mail et téléphone masqués</bpmn:text></bpmn:textAnnotation>
+    <bpmn:association id="As_TA_3" sourceRef="Task_Controle" targetRef="TA_3" associationDirection="None"/>
+    <bpmn:textAnnotation id="TA_4"><bpmn:text>Amélioration : le pilotage se fait chaque matin, plus seulement en fin de saison</bpmn:text></bpmn:textAnnotation>
+    <bpmn:association id="As_TA_4" sourceRef="End_OK" targetRef="TA_4" associationDirection="None"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_TO_BE">
+    <bpmndi:BPMNPlane id="Plane_TO_BE" bpmnElement="Collab_TO_BE">
+      <bpmndi:BPMNShape id="Participant_PA_di" bpmnElement="Participant_PA" isHorizontal="true"><dc:Bounds x="100" y="60" width="1850" height="900"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Client_di" bpmnElement="Lane_Client" isHorizontal="true"><dc:Bounds x="130" y="60" width="1820" height="140"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_OTA_di" bpmnElement="Lane_OTA" isHorizontal="true"><dc:Bounds x="130" y="200" width="1820" height="140"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_PMS_di" bpmnElement="Lane_PMS" isHorizontal="true"><dc:Bounds x="130" y="340" width="1820" height="140"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Accueil_di" bpmnElement="Lane_Accueil" isHorizontal="true"><dc:Bounds x="130" y="480" width="1820" height="160"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Plateforme_di" bpmnElement="Lane_Plateforme" isHorizontal="true"><dc:Bounds x="130" y="640" width="1820" height="200"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di" bpmnElement="Lane_Direction" isHorizontal="true"><dc:Bounds x="130" y="840" width="1820" height="120"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Souhait_di" bpmnElement="Start_Souhait"><dc:Bounds x="210" y="112" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="178" y="152" width="100" height="27"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Canal_di" bpmnElement="Task_Canal"><dc:Bounds x="290" y="95" width="130" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Canal_di" bpmnElement="GW_Canal" isMarkerVisible="true"><dc:Bounds x="470" y="105" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Ligne_di" bpmnElement="Task_Ligne"><dc:Bounds x="900" y="95" width="150" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_OTA_di" bpmnElement="Task_OTA"><dc:Bounds x="900" y="235" width="150" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PMS_Creer_di" bpmnElement="Task_PMS_Creer"><dc:Bounds x="900" y="375" width="150" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PMS_Direct_di" bpmnElement="Task_PMS_Direct"><dc:Bounds x="560" y="375" width="170" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Recevoir_di" bpmnElement="Task_Recevoir"><dc:Bounds x="425" y="525" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Saisir_di" bpmnElement="Task_Saisir"><dc:Bounds x="625" y="525" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Join_di" bpmnElement="GW_Join" isMarkerVisible="true"><dc:Bounds x="950" y="535" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Accueillir_di" bpmnElement="Task_Accueillir"><dc:Bounds x="1080" y="525" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Controle_di" bpmnElement="Task_Controle"><dc:Bounds x="1260" y="525" width="170" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Remise_di" bpmnElement="Task_Remise"><dc:Bounds x="1470" y="525" width="160" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Installe_di" bpmnElement="End_Installe"><dc:Bounds x="1680" y="542" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1648" y="582" width="100" height="27"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Timer_Nuit_di" bpmnElement="Timer_Nuit"><dc:Bounds x="210" y="682" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="173" y="722" width="110" height="27"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Depot_di" bpmnElement="Task_Depot"><dc:Bounds x="290" y="665" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Bronze_di" bpmnElement="Task_Bronze"><dc:Bounds x="460" y="665" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Silver_di" bpmnElement="Task_Silver"><dc:Bounds x="630" y="665" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Valide_di" bpmnElement="GW_Valide" isMarkerVisible="true"><dc:Bounds x="800" y="675" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Rejet_di" bpmnElement="Task_Rejet"><dc:Bounds x="755" y="765" width="140" height="60"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Rejet_di" bpmnElement="End_Rejet"><dc:Bounds x="960" y="777" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="913" y="817" width="130" height="42"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Gold_di" bpmnElement="Task_Gold"><dc:Bounds x="880" y="665" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Purge_di" bpmnElement="Task_Purge"><dc:Bounds x="1050" y="665" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Qualite_di" bpmnElement="Task_Qualite"><dc:Bounds x="1220" y="665" width="140" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Qualite_di" bpmnElement="GW_Qualite" isMarkerVisible="true"><dc:Bounds x="1390" y="675" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Arret_di" bpmnElement="End_Arret"><dc:Bounds x="1500" y="682" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1433" y="722" width="170" height="42"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Publier_di" bpmnElement="Task_Publier"><dc:Bounds x="1480" y="870" width="150" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_OK_di" bpmnElement="End_OK"><dc:Bounds x="1690" y="887" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1653" y="927" width="110" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Doc_ExportOTA_di" bpmnElement="Doc_ExportOTA"><dc:Bounds x="1090" y="245" width="36" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TA_1_di" bpmnElement="TA_1"><dc:Bounds x="540" y="765" width="200" height="75"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TA_2_di" bpmnElement="TA_2"><dc:Bounds x="200" y="365" width="200" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TA_3_di" bpmnElement="TA_3"><dc:Bounds x="1260" y="385" width="190" height="60"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TA_4_di" bpmnElement="TA_4"><dc:Bounds x="1760" y="860" width="180" height="70"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SF_1_di" bpmnElement="SF_1"><di:waypoint x="246" y="130"/><di:waypoint x="290" y="130"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_2_di" bpmnElement="SF_2"><di:waypoint x="420" y="130"/><di:waypoint x="470" y="130"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_3_di" bpmnElement="SF_3"><di:waypoint x="520" y="130"/><di:waypoint x="900" y="130"/><bpmndi:BPMNLabel><dc:Bounds x="682" y="112" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_4_di" bpmnElement="SF_4"><di:waypoint x="495" y="155"/><di:waypoint x="495" y="525"/><bpmndi:BPMNLabel><dc:Bounds x="501" y="333" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_5_di" bpmnElement="SF_5"><di:waypoint x="975" y="165"/><di:waypoint x="975" y="235"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_6_di" bpmnElement="SF_6"><di:waypoint x="975" y="305"/><di:waypoint x="975" y="375"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_7_di" bpmnElement="SF_7"><di:waypoint x="975" y="445"/><di:waypoint x="975" y="535"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_9_di" bpmnElement="SF_9"><di:waypoint x="565" y="560"/><di:waypoint x="625" y="560"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_10_di" bpmnElement="SF_10"><di:waypoint x="695" y="525"/><di:waypoint x="695" y="445"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_11_di" bpmnElement="SF_11"><di:waypoint x="730" y="410"/><di:waypoint x="790" y="410"/><di:waypoint x="790" y="620"/><di:waypoint x="975" y="620"/><di:waypoint x="975" y="585"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_12_di" bpmnElement="SF_12"><di:waypoint x="1000" y="560"/><di:waypoint x="1080" y="560"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_13_di" bpmnElement="SF_13"><di:waypoint x="1220" y="560"/><di:waypoint x="1260" y="560"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_14_di" bpmnElement="SF_14"><di:waypoint x="1430" y="560"/><di:waypoint x="1470" y="560"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_15_di" bpmnElement="SF_15"><di:waypoint x="1630" y="560"/><di:waypoint x="1680" y="560"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_20_di" bpmnElement="SF_20"><di:waypoint x="246" y="700"/><di:waypoint x="290" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_21_di" bpmnElement="SF_21"><di:waypoint x="430" y="700"/><di:waypoint x="460" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_22_di" bpmnElement="SF_22"><di:waypoint x="600" y="700"/><di:waypoint x="630" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_23_di" bpmnElement="SF_23"><di:waypoint x="770" y="700"/><di:waypoint x="800" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_24_di" bpmnElement="SF_24"><di:waypoint x="850" y="700"/><di:waypoint x="880" y="700"/><bpmndi:BPMNLabel><dc:Bounds x="837" y="682" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_25_di" bpmnElement="SF_25"><di:waypoint x="825" y="725"/><di:waypoint x="825" y="765"/><bpmndi:BPMNLabel><dc:Bounds x="831" y="738" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_26_di" bpmnElement="SF_26"><di:waypoint x="895" y="795"/><di:waypoint x="960" y="795"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_27_di" bpmnElement="SF_27"><di:waypoint x="1020" y="700"/><di:waypoint x="1050" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_28_di" bpmnElement="SF_28"><di:waypoint x="1190" y="700"/><di:waypoint x="1220" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_29_di" bpmnElement="SF_29"><di:waypoint x="1360" y="700"/><di:waypoint x="1390" y="700"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_30_di" bpmnElement="SF_30"><di:waypoint x="1440" y="700"/><di:waypoint x="1500" y="700"/><bpmndi:BPMNLabel><dc:Bounds x="1442" y="682" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_31_di" bpmnElement="SF_31"><di:waypoint x="1415" y="725"/><di:waypoint x="1415" y="905"/><di:waypoint x="1480" y="905"/><bpmndi:BPMNLabel><dc:Bounds x="1419" y="797" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_32_di" bpmnElement="SF_32"><di:waypoint x="1630" y="905"/><di:waypoint x="1690" y="905"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DA_1_di" bpmnElement="DA_1"><di:waypoint x="1050" y="270"/><di:waypoint x="1090" y="270"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="As_TA_1_di" bpmnElement="As_TA_1"><di:waypoint x="640" y="765"/><di:waypoint x="700" y="735"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="As_TA_2_di" bpmnElement="As_TA_2"><di:waypoint x="400" y="405"/><di:waypoint x="560" y="410"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="As_TA_3_di" bpmnElement="As_TA_3"><di:waypoint x="1345" y="445"/><di:waypoint x="1345" y="525"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="As_TA_4_di" bpmnElement="As_TA_4"><di:waypoint x="1726" y="905"/><di:waypoint x="1760" y="895"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
