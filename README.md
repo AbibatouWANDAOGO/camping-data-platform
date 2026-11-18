@@ -67,7 +67,18 @@ data).
 | Automatic benchmarks | 4 / 4 |
 | Same table without column comments | same answers on 3 questions: column names carried the meaning; instructions mattered more than comments |
 
+![Genie answers the occupancy question: 66.67 %, 8 of 12 pitches](docs/images/genie_taux_occupation.png)
+*Asked in French for the overall occupancy on 31 August, Genie sums the categories: 66.67 %, 8 pitches out of 12.*
+
+![Genie charts stays by group type](docs/images/genie_graphique_groupes.png)
+*Genie can also draw a chart. Here, stays by group type: 62.5 % families. This figure covers only customers who
+agreed to statistics, which Genie said only once its instructions required it.*
+
+![Benchmark evaluation: 100 % (4/4)](docs/images/genie_benchmarks.png)
+*Automatic evaluation against reference SQL queries: 4 benchmarks out of 4.*
+
 ![Genie refuses personal data and reports the leak on an empty pitch](docs/images/genie_refus_et_fuite.png)
+*Asked for customers' names and e-mails, Genie refuses; it reports the night's leak on an empty pitch.*
 
 ### Privacy by design
 
